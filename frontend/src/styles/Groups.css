@@ -1,0 +1,135 @@
+.groups-container {
+  padding: 16px;
+  background: #f5f5f5;
+  border-radius: 8px;
+}
+
+.groups-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.groups-header h3 {
+  margin: 0;
+  color: #333;
+  font-size: 16px;
+}
+
+.btn-close {
+  background: none;
+  border: none;
+  color: #999;
+  cursor: pointer;
+  font-size: 18px;
+}
+
+.btn-close:hover {
+  color: #333;
+}
+
+.group-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.group-input {
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+}
+
+.group-input:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 8px rgba(102, 126, 234, 0.2);
+}
+
+.members-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.members-label {
+  font-size: 13px;
+  color: #666;
+  margin: 0;
+  font-weight: bold;
+}
+
+.members-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 250px;
+  overflow-y: auto;
+  background: white;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+}
+
+.member-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.member-checkbox:hover {
+  background: #f5f5f5;
+}
+
+.member-checkbox input {
+  cursor: pointer;
+}
+
+.member-name {
+  font-size: 13px;
+  color: #333;
+}
+
+.btn-create-group {
+  padding: 10px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-create-group:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.btn-create-group:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.btn-new-group {
+  width: 100%;
+  padding: 10px;
+  background: white;
+  border: 2px solid #667eea;
+  color: #667eea;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+
+.btn-new-group:hover {
+  background: #667eea;
+  color: white;
+}
