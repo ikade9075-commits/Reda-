@@ -1,53 +1,112 @@
-# 📱 Reda - تطبيق المراسلة الفوري
+# 🚀 Reda - Advanced Messaging App
 
-تطبيق مراسلة فوري حديث بتصميم ذاتي وميزات قوية.
+## ✨ الإصدار 2.0.0 - المزايا المتقدمة
 
-## 🎯 الرؤية
+### 🔐 الأمان (Security)
+- ✅ تشفير End-to-End (AES-256)
+- ✅ مصادقة ثنائية (2FA) - Google Authenticator
+- ✅ حذف الرسائل التلقائي بعد مدة محددة
+- ✅ تشفير كلمات المرور (bcrypt)
+- ✅ JWT tokens آمن
 
-بناء تطبيق مراسلة آمن وسهل الاستخدام مع واجهة مستخدم جميلة وأداء عالي.
+### 📞 مكالمات صوتية وفيديو (WebRTC)
+- ✅ مكالمات فيديو P2P
+- ✅ مكالمات صوتية
+- ✅ تبديل الميكروفون والكاميرا
+- ✅ ICE candidates للاتصال الفوري
+- ✅ عرض الفيديو المحلي والبعيد
 
-## 🚀 المرحلة الأولى (MVP)
+### 💾 النسخ الاحتياطي والتصدير
+- ✅ تحميل كل المحادثات والرسائل
+- ✅ تصدير البيانات كـ JSON
+- ✅ استعادة النسخ الاحتياطية
+- ✅ حفظ الملفات الشخصية
 
-### المميزات الأساسية:
-- ✅ تسجيل حساب برقم الهاتف/الإيميل
-- 💬 محادثات فردية فورية
-- 👥 جروبات
-- 🟢 حالة الاتصال (أونلاين/آخر ظهور)
-- 🔔 إشعارات فورية
-- 🌙 Dark Mode
-- 📷 إرسال الصور والملفات
-- 🔍 البحث عن المستخدمين
-
-### المرحلة الثانية:
-- 🎤 مكالمات صوتية وفيديو
-- 📍 مشاركة الموقع
-- 🔐 تشفير طرفي
-- 💾 نسخ احتياطي
-- وأكثر...
-
-## 📁 هيكل المشروع
-
-```
-Reda-/
-├── backend/           # سيرفر Node.js + Express
-├── frontend/          # React Native / Web
-├── database/          # Schema وModels
-├── docs/              # التوثيق
-└── README.md
-```
-
-## 🛠️ التقنيات المستخدمة
-
-- **Backend:** Node.js + Express
-- **Database:** MongoDB / PostgreSQL
-- **Real-time:** Socket.io
-- **Frontend:** React Native
-- **Storage:** Firebase Storage / AWS S3
-
-## 📝 الترخيص
-
-MIT License
+### 🌐 الاستضافة والنشر
+- ✅ Heroku deployment ready
+- ✅ Railway deployment ready
+- ✅ Docker support
+- ✅ Environment variables configured
+- ✅ CI/CD ready
 
 ---
 
-**آخر تحديث:** سبتمبر 2026
+## 🛠️ التثبيت والتشغيل
+
+### Backend Setup
+```bash
+cd backend
+npm install
+cp .env.example .env
+npm run dev
+```
+
+### Frontend Setup
+```bash
+cd frontend
+npm install
+npm start
+```
+
+---
+
+## 📋 المتطلبات
+- Node.js v14+
+- MongoDB
+- npm/yarn
+- HTTPS certificate (للمكالمات)
+
+---
+
+## 🚀 النشر على Heroku
+```bash
+heroku login
+heroku create your-app-name
+git push heroku main
+```
+
+## 🚀 النشر على Railway
+```bash
+railway login
+railway init
+railway up
+```
+
+---
+
+## 📊 الميزات
+
+| الميزة | الحالة |
+|--------|--------|
+| Real-time Chat | ✅ |
+| File Upload | ✅ |
+| Video Calls | ✅ |
+| Audio Calls | ✅ |
+| End-to-End Encryption | ✅ |
+| 2FA Authentication | ✅ |
+| Message Backup | ✅ |
+| Dark Mode | ✅ |
+| Groups | ✅ |
+| Message Delete/Edit | ✅ |
+| Auto-delete Messages | ✅ |
+
+---
+
+## 🔑 المفاتيح الأمنية
+
+ ضع في `.env`:
+```
+JWT_SECRET=your_secure_key_here
+MONGODB_URI=mongodb://...
+CORS_ORIGIN=http://localhost:3000
+PORT=5000
+```
+
+---
+
+## 📞 الدعم
+للمساعدة أو الإبلاغ عن مشاكل، قم بإنشاء issue على GitHub.
+
+---
+
+**Made with ❤️ by ikade9075**

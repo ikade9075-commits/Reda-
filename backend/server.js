@@ -1,20 +1,17 @@
+require('dotenv').config();
 const express = require('express');
 const http = require('http');
 const socketIO = require('socket.io');
 const cors = require('cors');
-const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 const path = require('path');
-
-// Load environment variables
-dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
 const io = socketIO(server, {
   cors: {
     origin: process.env.CORS_ORIGIN || '*',
-    methods: ['GET', 'POST']
+    methods: ['GET', 'POST', 'PUT', 'DELETE']
   }
 });
 
@@ -22,8 +19,6 @@ const io = socketIO(server, {
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
-
-// Serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Database Connection
@@ -37,56 +32,82 @@ app.use('/api/users', require('./routes/users'));
 app.use('/api/messages', require('./routes/messages'));
 app.use('/api/conversations', require('./routes/conversations'));
 
-// Health Check
 app.get('/health', (req, res) => {
   res.json({ status: 'API is running' });
 });
 
-// Socket.io Events
-const userSockets = {}; // Map user IDs to socket IDs
+// WebRTC Signaling Server
+const activeCalls = {};
 
 io.on('connection', (socket) => {
   console.log(`🔗 New user connected: ${socket.id}`);
 
-  // User joined
   socket.on('user_joined', (data) => {
-    userSockets[data.userId] = socket.id;
-    console.log(`👤 User joined: ${data.userId}`);
+    socket.userId = data.userId;
     socket.broadcast.emit('user_status', { userId: data.userId, status: 'online' });
   });
 
-  // Send message
+  // WebRTC Signaling
+  socket.on('initiate_call', (data) => {
+    const { to, offer } = data;
+    activeCalls[socket.userId] = { to, status: 'ringing' };
+    io.to(to).emit('incoming_call', {
+      from: socket.userId,
+      offer: offer
+    });
+  });
+
+  socket.on('answer_call', (data) => {
+    const { to, answer } = data;
+    activeCalls[socket.userId] = { to, status: 'connected' };
+    io.to(to).emit('call_answered', {
+      from: socket.userId,
+      answer: answer
+    });
+  });
+
+  socket.on('ice_candidate', (data) => {
+    const { to, candidate } = data;
+    io.to(to).emit('ice_candidate', {
+      from: socket.userId,
+      candidate: candidate
+    });
+  });
+
+  socket.on('end_call', (data) => {
+    const { to } = data;
+    delete activeCalls[socket.userId];
+    io.to(to).emit('call_ended', { from: socket.userId });
+  });
+
+  socket.on('reject_call', (data) => {
+    const { to } = data;
+    io.to(to).emit('call_rejected', { from: socket.userId });
+  });
+
+  // Messages
   socket.on('send_message', (data) => {
-    console.log(`💬 Message from ${data.senderId}: ${data.text}`);
     socket.broadcast.emit('receive_message', data);
   });
 
-  // User typing
   socket.on('typing', (data) => {
     socket.broadcast.emit('user_typing', data);
   });
 
-  // Message deleted
   socket.on('message_deleted', (messageId) => {
     socket.broadcast.emit('message_deleted', messageId);
   });
 
-  // Message read
   socket.on('message_read', (data) => {
     socket.broadcast.emit('message_read', data);
   });
 
-  // Disconnect
   socket.on('disconnect', () => {
-    // Find and remove user from map
-    for (let userId in userSockets) {
-      if (userSockets[userId] === socket.id) {
-        delete userSockets[userId];
-        socket.broadcast.emit('user_status', { userId, status: 'offline' });
-        console.log(`❌ User disconnected: ${socket.id}`);
-        break;
-      }
+    if (socket.userId) {
+      delete activeCalls[socket.userId];
+      socket.broadcast.emit('user_status', { userId: socket.userId, status: 'offline' });
     }
+    console.log(`❌ User disconnected: ${socket.id}`);
   });
 });
 
@@ -96,7 +117,6 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Something went wrong!' });
 });
 
-// Start Server
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);

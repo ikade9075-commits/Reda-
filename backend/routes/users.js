@@ -1,37 +1,20 @@
 const express = require('express');
-const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
 const router = express.Router();
 
-// Middleware to verify token
-const verifyToken = (req, res, next) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'No token provided' });
-
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret_key');
-    req.userId = decoded.userId;
-    next();
-  } catch (err) {
-    res.status(401).json({ error: 'Invalid token' });
-  }
-};
-
-// Get all users
 router.get('/', async (req, res) => {
   try {
-    const users = await User.find().select('-password');
+    const users = await User.find().select('-password -encryptionKey -twoFactorSecret');
     res.json(users);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// Get user by ID
 router.get('/:id', async (req, res) => {
   try {
-    const user = await User.findById(req.params.id).select('-password');
+    const user = await User.findById(req.params.id).select('-password -encryptionKey -twoFactorSecret');
     if (!user) return res.status(404).json({ error: 'User not found' });
     res.json(user);
   } catch (err) {
@@ -39,26 +22,20 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Update user profile
-router.put('/:id', verifyToken, async (req, res) => {
+router.put('/:id', async (req, res) => {
   try {
-    if (req.userId !== req.params.id && req.userId !== req.params.id) {
-      return res.status(403).json({ error: 'Unauthorized' });
-    }
-
-    const { firstName, lastName, bio, profilePic } = req.body;
+    const { firstName, lastName, bio, profilePic, messageExpiry } = req.body;
     const user = await User.findByIdAndUpdate(
       req.params.id,
-      { firstName, lastName, bio, profilePic },
+      { firstName, lastName, bio, profilePic, messageExpiry },
       { new: true }
-    ).select('-password');
+    ).select('-password -encryptionKey -twoFactorSecret');
     res.json(user);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// Search users
 router.get('/search/:query', async (req, res) => {
   try {
     const users = await User.find({
@@ -68,14 +45,13 @@ router.get('/search/:query', async (req, res) => {
         { email: new RegExp(req.params.query, 'i') },
         { phone: new RegExp(req.params.query, 'i') }
       ]
-    }).select('-password');
+    }).select('-password -encryptionKey -twoFactorSecret');
     res.json(users);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// Update user status
 router.put('/:id/status', async (req, res) => {
   try {
     const { status } = req.body;
@@ -83,8 +59,30 @@ router.put('/:id/status', async (req, res) => {
       req.params.id,
       { status, lastSeen: Date.now() },
       { new: true }
-    ).select('-password');
+    ).select('-password -encryptionKey -twoFactorSecret');
     res.json(user);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/:id/backup', async (req, res) => {
+  try {
+    const Message = require('../models/Message');
+    const Conversation = require('../models/Conversation');
+    
+    const conversations = await Conversation.find({ participants: req.params.id });
+    const conversationIds = conversations.map(c => c._id);
+    const messages = await Message.find({ conversationId: { $in: conversationIds } });
+
+    const backup = {
+      user: await User.findById(req.params.id).select('-password -encryptionKey -twoFactorSecret'),
+      conversations,
+      messages,
+      exportedAt: new Date()
+    };
+
+    res.json(backup);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -4,10 +4,10 @@ const path = require('path');
 const fs = require('fs');
 const Message = require('../models/Message');
 const Conversation = require('../models/Conversation');
+const { encryptMessage, decryptMessage } = require('../utils/encryption');
 
 const router = express.Router();
 
-// Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const uploadDir = path.join(__dirname, '../uploads');
@@ -24,7 +24,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage: storage,
-  limits: { fileSize: 52428800 }, // 50MB
+  limits: { fileSize: 52428800 },
   fileFilter: (req, file, cb) => {
     const allowedTypes = /jpeg|jpg|png|gif|pdf|doc|docx|mp3|mp4|webm/;
     const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
@@ -38,7 +38,6 @@ const upload = multer({
   }
 });
 
-// Get messages for conversation
 router.get('/conversation/:conversationId', async (req, res) => {
   try {
     const messages = await Message.find({
@@ -50,24 +49,34 @@ router.get('/conversation/:conversationId', async (req, res) => {
   }
 });
 
-// Send message
 router.post('/', async (req, res) => {
   try {
-    const { senderId, conversationId, text, fileUrl, fileType } = req.body;
+    const { senderId, conversationId, text, fileUrl, fileType, encrypted, encryptionKey, expiresIn } = req.body;
 
-    const message = new Message({
+    let encryptedText = text;
+    if (encrypted && encryptionKey) {
+      encryptedText = encryptMessage(text, encryptionKey);
+    }
+
+    const messageData = {
       senderId,
       conversationId,
-      text,
+      text: encrypted ? '[Encrypted Message]' : text,
+      encryptedText: encrypted ? encryptedText : undefined,
       fileUrl,
       fileType,
-      status: 'sent'
-    });
+      status: 'sent',
+      encrypted
+    };
 
+    if (expiresIn && expiresIn > 0) {
+      messageData.expiresAt = new Date(Date.now() + expiresIn * 1000);
+    }
+
+    const message = new Message(messageData);
     await message.save();
     await message.populate('senderId', 'firstName lastName profilePic');
 
-    // Update conversation's lastMessage
     await Conversation.findByIdAndUpdate(conversationId, {
       lastMessage: message._id,
       updatedAt: Date.now()
@@ -79,7 +88,6 @@ router.post('/', async (req, res) => {
   }
 });
 
-// Upload file
 router.post('/upload', upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
@@ -87,7 +95,7 @@ router.post('/upload', upload.single('file'), async (req, res) => {
     }
 
     const fileUrl = `/uploads/${req.file.filename}`;
-    const fileType = req.file.mimetype.split('/')[0]; // image, video, audio, etc
+    const fileType = req.file.mimetype.split('/')[0];
 
     res.json({
       fileUrl,
@@ -99,7 +107,6 @@ router.post('/upload', upload.single('file'), async (req, res) => {
   }
 });
 
-// Delete message
 router.delete('/:messageId', async (req, res) => {
   try {
     const message = await Message.findByIdAndUpdate(
@@ -113,7 +120,6 @@ router.delete('/:messageId', async (req, res) => {
   }
 });
 
-// Edit message
 router.put('/:messageId', async (req, res) => {
   try {
     const { text } = req.body;
@@ -128,7 +134,6 @@ router.put('/:messageId', async (req, res) => {
   }
 });
 
-// Mark as read
 router.put('/:messageId/read', async (req, res) => {
   try {
     const { userId } = req.body;
@@ -141,6 +146,19 @@ router.put('/:messageId/read', async (req, res) => {
       { new: true }
     );
     res.json(message);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get('/backup/download', async (req, res) => {
+  try {
+    const messages = await Message.find({}).populate('senderId conversationId');
+    res.json({
+      backup: messages,
+      date: new Date(),
+      version: '1.0.0'
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
 
 const userSchema = new mongoose.Schema({
   phone: {
@@ -28,6 +27,16 @@ const userSchema = new mongoose.Schema({
     default: 'offline'
   },
   lastSeen: Date,
+  twoFactorSecret: String,
+  twoFactorEnabled: {
+    type: Boolean,
+    default: false
+  },
+  encryptionKey: String,
+  messageExpiry: {
+    type: Number,
+    default: 0 // 0 = never expires
+  },
   createdAt: {
     type: Date,
     default: Date.now
@@ -38,7 +47,8 @@ const userSchema = new mongoose.Schema({
   }
 });
 
-// Hash password before saving
+const bcrypt = require('bcryptjs');
+
 userSchema.pre('save', async function(next) {
   if (!this.isModified('password')) return next();
   
@@ -51,7 +61,6 @@ userSchema.pre('save', async function(next) {
   }
 });
 
-// Compare password method
 userSchema.methods.comparePassword = async function(password) {
   return await bcrypt.compare(password, this.password);
 };

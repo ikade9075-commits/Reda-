@@ -12,6 +12,7 @@ const messageSchema = new mongoose.Schema({
     required: true
   },
   text: String,
+  encryptedText: String,
   fileUrl: String,
   fileType: {
     type: String,
@@ -36,10 +37,18 @@ const messageSchema = new mongoose.Schema({
   },
   editedAt: Date,
   replyTo: mongoose.Schema.Types.ObjectId,
+  expiresAt: Date,
+  encrypted: {
+    type: Boolean,
+    default: false
+  },
   createdAt: {
     type: Date,
     default: Date.now
   }
 });
+
+// Auto-delete expired messages
+messageSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 module.exports = mongoose.model('Message', messageSchema);
